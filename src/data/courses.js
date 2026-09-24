@@ -1,0 +1,107 @@
+const courses = [
+  {
+    id: 1,
+    title: "Complete React JS Course",
+    instructor: "LearnHub",
+    category: "Web Development",
+    level: "Beginner",
+    rating: 4.8,
+    students: 1250,
+    duration: "12 hours",
+    lessons: 25,
+    description: "Learn React JS from basics to advanced concepts.",
+  },
+
+  {
+    id: 2,
+    title: "Java Programming Masterclass",
+    instructor: "LearnHub",
+    category: "Programming",
+    level: "Beginner",
+    rating: 4.7,
+    students: 980,
+    duration: "15 hours",
+    lessons: 30,
+    description: "Learn Java programming and object-oriented programming.",
+  },
+
+  {
+    id: 3,
+    title: "Python for Beginners",
+    instructor: "LearnHub",
+    category: "Programming",
+    level: "Beginner",
+    rating: 4.9,
+    students: 2100,
+    duration: "10 hours",
+    lessons: 28,
+    description: "Start learning Python from the basics.",
+  },
+
+  {
+    id: 4,
+    title: "Node.js and Express.js",
+    instructor: "LearnHub",
+    category: "Backend",
+    level: "Intermediate",
+    rating: 4.6,
+    students: 750,
+    duration: "14 hours",
+    lessons: 26,
+    description: "Build backend applications using Node.js and Express.",
+  },
+
+  {
+    id: 5,
+    title: "MySQL Database Fundamentals",
+    instructor: "LearnHub",
+    category: "Database",
+    level: "Beginner",
+    rating: 4.8,
+    students: 860,
+    duration: "8 hours",
+    lessons: 20,
+    description: "Learn SQL and MySQL database management.",
+  },
+
+  {
+    id: 6,
+    title: "Introduction to Artificial Intelligence",
+    instructor: "LearnHub",
+    category: "AI",
+    level: "Beginner",
+    rating: 4.7,
+    students: 650,
+    duration: "11 hours",
+    lessons: 22,
+    description: "Understand the fundamentals of Artificial Intelligence.",
+  },
+
+  {
+    id: 7,
+    title: "HTML and CSS Complete Course",
+    instructor: "LearnHub",
+    category: "Web Development",
+    level: "Beginner",
+    rating: 4.8,
+    students: 1500,
+    duration: "7 hours",
+    lessons: 18,
+    description: "Learn how to build websites using HTML and CSS.",
+  },
+
+  {
+    id: 8,
+    title: "JavaScript Complete Course",
+    instructor: "LearnHub",
+    category: "Web Development",
+    level: "Intermediate",
+    rating: 4.9,
+    students: 1800,
+    duration: "13 hours",
+    lessons: 32,
+    description: "Learn JavaScript from fundamentals to advanced concepts.",
+  }
+];
+
+export default courses;
