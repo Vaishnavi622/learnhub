@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   BrowserRouter,
   Routes,
@@ -41,6 +43,7 @@ function NavigationBar() {
     : "";
 
   return (
+    
     <nav
       style={{
         width: "100%",
@@ -54,6 +57,11 @@ function NavigationBar() {
         borderBottom: "1px solid #e5e5e5",
       }}
     >
+      <ToastContainer> 
+        position="top-right"
+        autoClose={3000}
+        theme="colored"
+        </ToastContainer>
       {/* Logo */}
       <Link
         to="/"

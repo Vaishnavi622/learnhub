@@ -1,153 +1,149 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  signupUser,
+  clearMessage,
+} from "../slices/authSlice.js";
 
 function Register() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const { loading, error, success } = useSelector(
+    (state) => state.auth
+  );
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
-  const handleRegister = async (e) => {
+  const [validationError, setValidationError] = useState("");
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
+
+    setValidationError("");
+    dispatch(clearMessage());
+  }
+
+  async function handleRegister(e) {
     e.preventDefault();
 
-    setError("");
-    setSuccess("");
+    setValidationError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+    if (
+      !form.name.trim() ||
+      !form.email.trim() ||
+      !form.password ||
+      !form.confirmPassword
+    ) {
+      setValidationError("Please fill in all fields.");
       return;
     }
 
-    setLoading(true);
+    if (form.password.length < 8) {
+      setValidationError(
+        "Password must be at least 8 characters long."
+      );
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setValidationError("Passwords do not match.");
+      return;
+    }
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: name.trim(),
-            email: email.trim(),
-            password,
-          }),
-        }
-      );
+      await dispatch(
+        signupUser({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          password: form.password,
+        })
+      ).unwrap();
 
-      const data = await response.json();
+      setForm({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
 
-      console.log(
-        "REGISTRATION RESPONSE:",
-        JSON.stringify(data, null, 2)
-      );
-
-      if (!response.ok) {
-        setError(
-          data.error
-            ? `${data.message}: ${data.error}`
-            : data.message || "Registration failed."
-        );
-        return;
-      }
-
-      setSuccess(
-        "Registration successful! Redirecting to login..."
-      );
-
-      setName("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-
-      setTimeout(() => {
-        navigate("/login");
-      }, 1200);
-
-    } catch (error) {
-      console.error("Registration error:", error);
-
-      setError(
-        "Cannot connect to the backend. Make sure the server is running."
-      );
-    } finally {
-      setLoading(false);
+      navigate("/login");
+    } catch (err) {
+      // The error is displayed from Redux state.
+      console.error("Registration failed:", err);
     }
-  };
+  }
 
   return (
     <div className="auth-page">
-
       <div className="auth-card">
-
         <h1>Create Account</h1>
 
-        <p>
-          Register to start learning with LearnHub
-        </p>
+        <p>Register to start learning with LearnHub</p>
 
-        {error && (
+        {(validationError || error) && (
           <div className="error-message">
-            ⚠ {error}
+            ⚠ {validationError || error}
           </div>
         )}
 
-        {success && (
+        {success && !loading && (
           <div className="success-message">
             ✓ {success}
           </div>
         )}
 
         <form onSubmit={handleRegister}>
-
           <div className="form-group">
-            <label htmlFor="name">
-              Name
-            </label>
+            <label htmlFor="name">Name</label>
 
             <input
               id="name"
+              name="name"
               type="text"
               placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={form.name}
+              onChange={handleChange}
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="email">
-              Email
-            </label>
+            <label htmlFor="email">Email</label>
 
             <input
               id="email"
+              name="email"
               type="email"
               placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={form.email}
+              onChange={handleChange}
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">
-              Password
-            </label>
+            <label htmlFor="password">Password</label>
 
             <input
               id="password"
+              name="password"
               type="password"
               placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={form.password}
+              onChange={handleChange}
               required
             />
           </div>
@@ -159,12 +155,11 @@ function Register() {
 
             <input
               id="confirmPassword"
+              name="confirmPassword"
               type="password"
               placeholder="Confirm your password"
-              value={confirmPassword}
-              onChange={(e) =>
-                setConfirmPassword(e.target.value)
-              }
+              value={form.confirmPassword}
+              onChange={handleChange}
               required
             />
           </div>
@@ -176,19 +171,14 @@ function Register() {
           >
             {loading ? "Registering..." : "Register"}
           </button>
-
         </form>
 
         <div className="auth-footer">
           <p>Already have an account?</p>
 
-          <Link to="/login">
-            Login
-          </Link>
+          <Link to="/login">Login</Link>
         </div>
-
       </div>
-
     </div>
   );
 }

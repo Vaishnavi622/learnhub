@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function CourseDetails() {
   const { id } = useParams();
@@ -183,7 +184,7 @@ function CourseDetails() {
       }).catch(() => {});
     }
 
-    alert("Course enrolled successfully!");
+    toast.success("Course enrolled successfully!");
     navigate("/my-courses");
   };
 

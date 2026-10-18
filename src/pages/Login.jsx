@@ -1,129 +1,147 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser, logout } from "../slices/authSlice.js";
 
 function Login() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { user, loading, error } = useSelector(
+    (state) => state.auth
+  );
 
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
 
-  const handleSubmit = async (e) => {
+  const [validationError, setValidationError] = useState("");
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+
+    setForm((prevForm) => ({
+      ...prevForm,
+      [name]: value,
+    }));
+
+    setValidationError("");
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault();
+    setValidationError("");
 
-    setError("");
-
-    // Empty fields
-    if (!email || !password) {
-      setError("Please enter email and password.");
+    if (!form.email.trim() || !form.password) {
+      setValidationError("Please enter email and password.");
       return;
     }
 
-    // Password validation
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
+    if (form.password.length < 8) {
+      setValidationError(
+        "Password must be at least 8 characters long."
+      );
       return;
     }
 
     try {
-      setLoading(true);
+      await dispatch(
+        loginUser({
+          email: form.email.trim(),
+          password: form.password,
+        })
+      ).unwrap();
 
-      const response = await fetch(
-        "http://localhost:5000/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            password,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(
-          data.message || "Invalid email or password."
-        );
-        return;
-      }
-
-      // Save user & auth info
-      const displayName = data.user.name || data.user.username || data.user.email.split("@")[0];
-      localStorage.setItem("user", JSON.stringify(data.user));
-      localStorage.setItem("userName", displayName);
-      localStorage.setItem("userEmail", data.user.email);
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-      localStorage.setItem("isLoggedIn", "true");
-
-      // Go to home
       navigate("/");
-    } catch (error) {
-      console.error("Login error:", error);
-
-      setError(
-        "Unable to connect to the server. Make sure the backend is running."
-      );
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error("Login failed:", err);
     }
-  };
+  }
+
+  if (user) {
+    return (
+      <div style={styles.container}>
+        <div style={styles.card}>
+          <h2 style={styles.title}>
+            Welcome, {user.name || user.username || user.email}!
+          </h2>
+
+          <p style={styles.subtitle}>
+            You are logged in to LearnHub.
+          </p>
+
+          <button
+            type="button"
+            style={styles.button}
+            onClick={() => {
+              dispatch(logout());
+              navigate("/login");
+            }}
+          >
+            Logout
+          </button>
+
+          <p style={styles.registerText}>
+            <Link to="/" style={styles.link}>
+              Go to Home
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-
-        <h2 style={styles.title}>
-          Welcome Back
-        </h2>
+        <h2 style={styles.title}>Welcome Back</h2>
 
         <p style={styles.subtitle}>
           Login to continue learning
         </p>
 
         <form onSubmit={handleSubmit}>
-
           {/* EMAIL */}
           <input
+            name="email"
             type="email"
             placeholder="Email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setError("");
-            }}
+            value={form.email}
+            onChange={handleChange}
             style={styles.input}
+            required
           />
 
           {/* PASSWORD */}
           <input
+            name="password"
             type="password"
             placeholder="Password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              setError("");
-            }}
+            value={form.password}
+            onChange={handleChange}
             style={styles.input}
+            required
           />
 
           {/* PASSWORD WARNING */}
-          {password.length > 0 &&
-            password.length < 8 && (
+          {form.password.length > 0 &&
+            form.password.length < 8 && (
               <p style={styles.warning}>
                 ⚠ Password must be at least 8 characters.
               </p>
             )}
 
-          {/* ERROR */}
-          {error && (
+          {/* VALIDATION ERROR */}
+          {validationError && (
+            <p style={styles.error}>
+              ⚠ {validationError}
+            </p>
+          )}
+
+          {/* REDUX / API ERROR */}
+          {!validationError && error && (
             <p style={styles.error}>
               ⚠ {error}
             </p>
@@ -136,24 +154,19 @@ function Login() {
             style={{
               ...styles.button,
               opacity: loading ? 0.7 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
             }}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
-
         </form>
 
         <p style={styles.registerText}>
           Don't have an account?{" "}
-
-          <Link
-            to="/register"
-            style={styles.link}
-          >
+          <Link to="/register" style={styles.link}>
             Register
           </Link>
         </p>
-
       </div>
     </div>
   );

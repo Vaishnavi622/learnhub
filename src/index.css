@@ -2674,8 +2674,7 @@ button, input, select, textarea {
   width: 100%;
   height: 70px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: space-evenly;
   padding: 0 50px;
   background: white;
   border-bottom: 1px solid #eee;
@@ -2686,12 +2685,14 @@ button, input, select, textarea {
   font-size: 24px;
   font-weight: 700;
   color: #29277d;
+  align-items: right;
 }
 
 .nav-links {
   display: flex;
   align-items: center;
   gap: 30px;
+
 }
 
 .nav-links a {
