@@ -1,302 +1,266 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCourses } from "../slices/coursesSlice";
+import { getUser, updateUser } from "../userApi";
+import { toast, ToastContainer } from "react-toastify";
 function CourseDetails() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  // Course data
-  const courses = [
-    {
-      id: 1,
-      title: "Complete React JS Course",
-      instructor: "LearnHub",
-      description:
-        "Learn React JS from basics to advanced concepts and build modern, responsive web applications.",
-      rating: "4.8",
-      students: "1250",
-      level: "Beginner",
-      duration: "12 hours",
-      lessons: 25,
-      category: "Web Development",
-    },
-
-    {
-      id: 2,
-      title: "Java Programming",
-      instructor: "LearnHub",
-      description:
-        "Learn Java programming from scratch and understand object-oriented programming concepts.",
-      rating: "4.7",
-      students: "980",
-      level: "Beginner",
-      duration: "15 hours",
-      lessons: 30,
-      category: "Programming",
-    },
-
-    {
-      id: 3,
-      title: "Python Programming",
-      instructor: "LearnHub",
-      description:
-        "Learn Python programming from the basics to advanced concepts and build real-world projects.",
-      rating: "4.9",
-      students: "2100",
-      level: "Beginner",
-      duration: "14 hours",
-      lessons: 28,
-      category: "Programming",
-    },
-
-    {
-      id: 4,
-      title: "Node JS Complete Course",
-      instructor: "LearnHub",
-      description:
-        "Learn Node JS and build powerful backend applications using JavaScript.",
-      rating: "4.8",
-      students: "870",
-      level: "Intermediate",
-      duration: "10 hours",
-      lessons: 22,
-      category: "Web Development",
-    },
-
-    {
-      id: 5,
-      title: "MySQL Database Course",
-      instructor: "LearnHub",
-      description:
-        "Learn MySQL database concepts, SQL queries, relationships and database design.",
-      rating: "4.7",
-      students: "760",
-      level: "Beginner",
-      duration: "8 hours",
-      lessons: 20,
-      category: "Database",
-    },
-
-    {
-      id: 6,
-      title: "HTML and CSS",
-      instructor: "LearnHub",
-      description:
-        "Learn HTML and CSS and create beautiful responsive websites from scratch.",
-      rating: "4.9",
-      students: "1800",
-      level: "Beginner",
-      duration: "9 hours",
-      lessons: 24,
-      category: "Web Development",
-    },
-
-    {
-      id: 7,
-      title: "Express JS",
-      instructor: "LearnHub",
-      description:
-        "Learn Express JS and create REST APIs and backend applications with Node JS.",
-      rating: "4.8",
-      students: "650",
-      level: "Intermediate",
-      duration: "7 hours",
-      lessons: 18,
-      category: "Web Development",
-    },
-
-    {
-      id: 8,
-      title: "JavaScript Complete Course",
-      instructor: "LearnHub",
-      description:
-        "Master JavaScript fundamentals, ES6 features, DOM manipulation and modern JavaScript.",
-      rating: "4.9",
-      students: "2300",
-      level: "Beginner",
-      duration: "16 hours",
-      lessons: 35,
-      category: "Programming",
-    },
-  ];
-
-  // Find selected course
-  const course = courses.find(
-    (item) => item.id === Number(id)
+  // Get courses from Redux store
+  const { courses, loading, error } = useSelector(
+    (state) => state.courses
   );
 
-  // If course does not exist
-  if (!course) {
+  // Get logged-in user from Redux store
+  const user = useSelector((state) => state.auth.user);
+
+  // Component states
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
+
+  // Find the selected course
+  const course = courses.find(
+    (item) => String(item.id) === String(id)
+  );
+
+  // Fetch courses if they are not already available
+  useEffect(() => {
+    if (courses.length === 0) {
+      dispatch(fetchCourses());
+    }
+  }, [dispatch, courses.length]);
+
+  // Check whether the logged-in user is enrolled
+  useEffect(() => {
+    async function checkEnrollment() {
+      if (!user?.id) {
+        setEnrolled(false);
+        return;
+      }
+
+      try {
+        const latestUser = await getUser(user.id);
+
+        const enrolledCourses =
+          latestUser.enrolledCourses || [];
+
+        const alreadyEnrolled = enrolledCourses.some(
+          (item) => String(item.courseId) === String(id)
+        );
+
+        setEnrolled(alreadyEnrolled);
+      } catch (error) {
+        console.error("Error checking enrollment:", error);
+        setEnrolled(false);
+      }
+    }
+
+    checkEnrollment();
+  }, [id, user?.id]);
+
+  // Enroll the logged-in user in the selected course
+  async function handleEnroll() {
+    if (!user?.id) {
+      toast.info("Please login before enrolling in a course.");
+      return;
+    }
+
+    if (!course) {
+      return;
+    }
+
+    try {
+      setEnrolling(true);
+
+      // Get the latest user information from JSON Server
+      const latestUser = await getUser(user.id);
+
+      const enrolledCourses =
+        latestUser.enrolledCourses || [];
+
+      // Check whether the user has already enrolled
+      const alreadyEnrolled = enrolledCourses.some(
+        (item) => String(item.courseId) === String(course.id)
+      );
+
+      if (alreadyEnrolled) {
+        setEnrolled(true);
+        return;
+      }
+
+      // Create the new enrollment
+      const newEnrollment = {
+        courseId: course.id,
+        progress: 0,
+        completedLessons: [],
+        enrolledAt: new Date().toISOString(),
+      };
+
+      // Update the user's enrollment list
+      const updatedUser = {
+        ...latestUser,
+        enrolledCourses: [
+          ...enrolledCourses,
+          newEnrollment,
+        ],
+      };
+
+      // Save the updated user to JSON Server
+      await updateUser(updatedUser);
+
+      setEnrolled(true);
+
+      toast.success("Successfully enrolled in the course!");
+    } catch (error) {
+      console.error("Enrollment error:", error);
+      toast.error("Unable to enroll. Please try again.");
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
+  // Loading state
+  if (loading && courses.length === 0) {
     return (
-      <div className="not-found">
-        <h1>Course Not Found</h1>
-        <p>The course you are looking for does not exist.</p>
-        <button className="primary-btn" onClick={() => navigate("/courses")}>
-          Back to Courses
-        </button>
+      <div className="course-details">
+        Loading course...
       </div>
     );
   }
 
-  // Get enrolled courses from localStorage
-  const rawEnrolled =
-    JSON.parse(
-      localStorage.getItem("enrolledCourses")
-    ) || [];
-
-  const enrolledIds = rawEnrolled.map((item) =>
-    typeof item === "object" && item !== null ? item.id : Number(item)
-  );
-
-  // Check whether already enrolled
-  const isEnrolled = enrolledIds.includes(course.id);
-
-  // Enroll course
-  const handleEnroll = () => {
-    if (isEnrolled) {
-      navigate("/my-courses");
-      return;
-    }
-
-    const updatedCourses = [
-      ...rawEnrolled,
-      course,
-    ];
-
-    localStorage.setItem(
-      "enrolledCourses",
-      JSON.stringify(updatedCourses)
+  // Error state
+  if (error && courses.length === 0) {
+    return (
+      <div className="course-details auth-error">
+        {String(error)}
+      </div>
     );
+  }
 
-    // Sync enrollment with backend API if user logged in
-    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-    if (storedUser && storedUser.id) {
-      fetch("http://localhost:5000/api/users/enroll", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(localStorage.getItem("token") ? { Authorization: `Bearer ${localStorage.getItem("token")}` } : {})
-        },
-        body: JSON.stringify({
-          userId: storedUser.id,
-          courseId: course.id,
-        }),
-      }).catch(() => {});
-    }
+  // Course not found
+  if (!course) {
+    return (
+      <div className="course-not-found">
+        <h1>Course Not Found</h1>
 
-    toast.success("Course enrolled successfully!");
-    navigate("/my-courses");
-  };
-
-  // Start learning
-  const handleStartLearning = () => {
-    navigate(`/learn/${course.id}`);
-  };
+        <Link to="/courses" className="secondary-btn">
+          Back to Courses
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="course-details">
-
-      {/* =========================
-          COURSE HERO SECTION
-      ========================= */}
-      <section className="course-details-header">
+      <header className="course-details-header">
         <div className="course-details-info">
-          <span className="free-badge">
-            FREE COURSE
-          </span>
+          <Link to="/courses" className="back-link">
+            ← Back to Courses
+          </Link>
+
+          <p>{course.category}</p>
 
           <h1>{course.title}</h1>
 
           <p className="course-description">
-            {course.description}
+            {course.description ||
+              `Explore ${course.title} with structured lessons and practical learning.`}
           </p>
 
           <div className="course-details-rating">
-            <strong>⭐ {course.rating}</strong>
-            <span>({course.students} students)</span>
+            <strong>★ {course.rating}</strong>
+            <span>{course.level}</span>
+            <span>{course.duration}</span>
           </div>
-
-          <p style={{ marginTop: "14px" }}>
-            Created by <strong>{course.instructor}</strong>
-          </p>
         </div>
-      </section>
+      </header>
 
-      {/* =========================
-          COURSE INFORMATION & SIDEBAR
-      ========================= */}
       <div className="course-details-content">
-
-        {/* LEFT SIDE CONTENT */}
-        <div className="course-main">
+        <main className="course-main">
           <h2>What You Will Learn</h2>
 
           <div className="learning-points">
-            <p>✓ Understand the fundamentals</p>
-            <p>✓ Learn important concepts step by step</p>
-            <p>✓ Build real-world projects</p>
-            <p>✓ Practice with hands-on exercises</p>
-            <p>✓ Learn modern development techniques</p>
-            <p>✓ Build a strong foundation</p>
-          </div>
-
-          <h2>About This Course</h2>
-          <p className="course-description" style={{ color: "var(--slate-600)", marginBottom: "35px" }}>
-            {course.description}
-          </p>
-
-          <h2>Course Curriculum</h2>
-          <div className="lessons">
-            {Array.from(
-              { length: Math.min(course.lessons, 10) },
-              (_, index) => (
-                <div className="lesson" key={index}>
-                  <span>{index + 1}</span>
-                  <div>
-                    <p>Lesson {index + 1}: Core Concepts & Practical Practice</p>
-                  </div>
-                </div>
-              )
+            {course.whatYouWillLearn?.length ? (
+              course.whatYouWillLearn.map((item, index) => (
+                <p key={index}>
+                  <span>✓</span> {item}
+                </p>
+              ))
+            ) : (
+              <p>Learning outcomes will be added soon.</p>
             )}
           </div>
-        </div>
 
-        {/* RIGHT SIDE ENROLLMENT CARD */}
+          <h2>Course Curriculum</h2>
+
+          <div className="lessons">
+            {course.lessons?.map((lesson, index) => (
+              <div className="lesson" key={lesson.id}>
+                <span>
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+
+                <div>
+                  <p>{lesson.title}</p>
+                  <small>{lesson.description}</small>
+                </div>
+
+                <small>{lesson.duration}</small>
+              </div>
+            ))}
+          </div>
+        </main>
+
         <aside className="enrollment-card">
           <div className="course-preview">
-            <span>FREE COURSE</span>
+            LEARNHUB
           </div>
 
           <h2>Free</h2>
-          <p>Get full access to all lectures, code samples, and lessons.</p>
 
-          {isEnrolled ? (
-            <button
-              className="enroll-btn enrolled-btn"
-              onClick={handleStartLearning}
-            >
-              Start Learning
-            </button>
-          ) : (
-            <button
-              className="enroll-btn"
-              onClick={handleEnroll}
-            >
-              Enroll for Free
-            </button>
-          )}
+          <p>Start learning at your own pace.</p>
 
           <div className="course-meta">
-            <p>📚 {course.lessons} Lessons</p>
+            <p>
+              📚 {course.lessons?.length || 0} lessons
+            </p>
+
             <p>⏱ {course.duration}</p>
-            <p>📊 {course.level}</p>
-            <p>📁 {course.category}</p>
-            <p>⭐ {course.rating} Rating</p>
+
+            <p>⭐ {course.rating} rating</p>
+
+            <p className="capitalize">
+              {course.level} level
+            </p>
           </div>
+
+          <button
+            onClick={handleEnroll}
+            disabled={enrolled || enrolling}
+            className={`enroll-btn ${
+              enrolled ? "enrolled-btn" : ""
+            }`}
+          >
+            {enrolling
+              ? "Enrolling..."
+              : enrolled
+              ? "Already Enrolled"
+              : "Enroll Now"}
+          </button>
+
+          {enrolled && (
+            <Link
+              to={`/learn/${course.id}`}
+              className="continue-btn"
+            >
+              Start Learning
+            </Link>
+          )}
         </aside>
-
       </div>
-
     </div>
   );
 }

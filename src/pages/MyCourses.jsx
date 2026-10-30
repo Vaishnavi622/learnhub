@@ -1,185 +1,186 @@
+
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import courses from "../data/courses";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCourses } from "../slices/coursesSlice";
+import { getUser } from "../userApi";
 
 function MyCourses() {
+  const dispatch = useDispatch();
 
-  const rawEnrolled =
-    JSON.parse(
-      localStorage.getItem("enrolledCourses")
-    ) || [];
-
-  const enrolledIds = rawEnrolled.map((item) =>
-    typeof item === "object" && item !== null ? item.id : Number(item)
+  // Get courses from Redux store
+  const { courses, loading, error } = useSelector(
+    (state) => state.courses
   );
 
-  const myCourses = courses.filter(
-    (course) =>
-      enrolledIds.includes(course.id)
-  );
+  // Get logged-in user from Redux store
+  const user = useSelector((state) => state.auth.user);
 
+  // Store enrollment details fetched from JSON Server
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [userLoading, setUserLoading] = useState(true);
+
+  // Fetch courses if they are not already available
+  useEffect(() => {
+    if (courses.length === 0) {
+      dispatch(fetchCourses());
+    }
+  }, [dispatch, courses.length]);
+
+  // Fetch the logged-in user's enrollment details
+  useEffect(() => {
+    async function loadMyCourses() {
+      if (!user?.id) {
+        setEnrolledCourses([]);
+        setUserLoading(false);
+        return;
+      }
+
+      try {
+        setUserLoading(true);
+
+        const latestUser = await getUser(user.id);
+
+        setEnrolledCourses(latestUser.enrolledCourses || []);
+      } catch (err) {
+        console.error("Error fetching enrolled courses:", err);
+        setEnrolledCourses([]);
+      } finally {
+        setUserLoading(false);
+      }
+    }
+
+    loadMyCourses();
+  }, [user?.id]);
+
+  // Match enrolled course IDs with courses from Redux
+  const myCourses = courses
+    .filter((course) =>
+      enrolledCourses.some(
+        (enrollment) =>
+          String(enrollment.courseId) === String(course.id)
+      )
+    )
+    .map((course) => {
+      const enrollment = enrolledCourses.find(
+        (item) =>
+          String(item.courseId) === String(course.id)
+      );
+
+      return {
+        ...course,
+        completedLessons: enrollment?.completedLessons || [],
+        progress: enrollment?.progress || 0,
+      };
+    });
+
+  if (userLoading || (loading && courses.length === 0)) {
+    return (
+      <div className="my-courses-page">
+        Loading your courses...
+      </div>
+    );
+  }
+
+  if (error && courses.length === 0) {
+    return (
+      <div className="my-courses-page auth-error">
+        {String(error)}
+      </div>
+    );
+  }
 
   return (
-
     <div className="my-courses-page">
-
-
-      <div className="my-courses-header">
-
-        <h1>
-          My Courses
-        </h1>
-
+      <header className="my-courses-header">
+        <h1>My Learning</h1>
         <p>
-          Continue learning from where you stopped.
+          Track your progress and continue where you left off.
         </p>
-
-      </div>
-
+      </header>
 
       {myCourses.length === 0 ? (
-
         <div className="no-enrolled-courses">
-
-          <h2>
-            No courses enrolled yet
-          </h2>
+          <h2>You haven't enrolled in any courses yet.</h2>
 
           <p>
-            Explore our free courses and start learning.
+            Explore our courses and start learning something new.
           </p>
 
-          <Link to="/courses">
-
-            <button className="primary-btn">
-              Explore Courses
-            </button>
-
+          <Link to="/courses" className="primary-btn">
+            Explore Courses
           </Link>
-
         </div>
-
       ) : (
-
-
         <div className="my-courses-grid">
-
           {myCourses.map((course) => {
+            const totalLessons = course.lessons?.length || 0;
 
+            // Calculate progress using completed lessons
+            const completedCount = course.completedLessons.length;
 
-            const storageKey =
-              `completedLessons_${course.id}`;
-
-
-            const completedLessons =
-              JSON.parse(
-                localStorage.getItem(storageKey)
-              ) || [];
-
-
-            const totalLessons = 6;
-
-
-            const progress = Math.round(
-
-              (completedLessons.length /
-                totalLessons) * 100
-
-            );
-
+            const progress = totalLessons
+              ? Math.round(
+                  (completedCount / totalLessons) * 100
+                )
+              : 0;
 
             return (
-
-              <div
+              <article
                 className="my-course-card"
                 key={course.id}
               >
-
-
                 <div className="my-course-image">
-
-                  FREE
-
+                  LEARNHUB
                 </div>
 
-
                 <div className="my-course-content">
-
-
-                  <h2>
-                    {course.title}
-                  </h2>
-
-
-                  <p>
-                    {course.description}
+                  <p className="category">
+                    {course.category}
                   </p>
 
+                  <h2>{course.title}</h2>
 
-                  {/* PROGRESS */}
+                  <p>
+                    {course.description ||
+                      `Continue your learning journey in ${course.title}.`}
+                  </p>
 
                   <div className="progress-container">
-
-
                     <div className="progress-label">
-
-                      <span>
-                        Progress
-                      </span>
-
-                      <span>
-                        {progress}%
-                      </span>
-
+                      <span>Course Progress</span>
+                      <span>{progress}%</span>
                     </div>
 
-
                     <div className="progress-bar">
-
                       <div
                         className="progress-fill"
                         style={{
-                          width: `${progress}%`
+                          width: `${progress}%`,
                         }}
                       />
-
                     </div>
 
-
+                    <p>
+                      {completedCount} completed lessons out of{" "}
+                      {totalLessons} total lessons.
+                    </p>
                   </div>
-
 
                   <Link
                     to={`/learn/${course.id}`}
+                    className="continue-btn"
                   >
-
-                    <button className="continue-btn">
-
-                      {progress === 100
-                        ? "Course Completed"
-                        : "Continue Learning"}
-
-                    </button>
-
+                    Continue Learning
                   </Link>
-
-
                 </div>
-
-
-              </div>
-
+              </article>
             );
-
           })}
-
         </div>
-
       )}
-
     </div>
-
   );
-
 }
 
 export default MyCourses;

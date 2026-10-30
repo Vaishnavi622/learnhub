@@ -4,13 +4,123 @@
       "id": "1",
       "name": "Vaishnavi",
       "email": "vaishnavi@example.com",
-      "password": "test123"
+      "password": "test123",
+      "enrolledCourses": []
     },
     {
       "name": "praveen",
       "email": "praveen12rangasamy@gmail.com",
       "password": "12345678",
-      "id": "5V2W4gtFAa0"
+      "id": "5V2W4gtFAa0",
+      "enrolledCourses": []
+    },
+    {
+      "name": "praveen",
+      "email": "praveen127@gmail.com",
+      "password": "praveenv",
+      "id": "CAJ5rtOAzgs",
+      "enrolledCourses": [
+        {
+          "courseId": "1",
+          "progress": 0,
+          "completedLessons": [],
+          "enrolledAt": "2026-10-30T01:30:38.263Z"
+        },
+        {
+          "courseId": "2",
+          "progress": 0,
+          "completedLessons": [],
+          "enrolledAt": "2026-10-30T01:42:22.929Z"
+        }
+      ]
+    }
+  ],
+  "courses": [
+    {
+      "id": "1",
+      "title": "React JS for Beginners",
+      "category": "Web Development",
+      "duration": "8 hours",
+      "rating": 4.8,
+      "level": "beginner",
+      "whatYouWillLearn": [
+        "Understand React components and JSX",
+        "Use props and state to build interactive interfaces",
+        "Manage component state using React Hooks",
+        "Build a small React application"
+      ],
+      "lessons": [
+        {
+          "id": "l1",
+          "title": "Introduction to React",
+          "description": "Learn what React is and why developers use it.",
+          "duration": "10 minutes"
+        },
+        {
+          "id": "l2",
+          "title": "Getting Started with React",
+          "description": "Understand project setup and the React application structure.",
+          "duration": "20 minutes"
+        },
+        {
+          "id": "l3",
+          "title": "JSX and Components",
+          "description": "Learn how to create reusable UI components.",
+          "duration": "30 minutes"
+        },
+        {
+          "id": "l4",
+          "title": "Props and State",
+          "description": "Pass data between components and manage changing values.",
+          "duration": "35 minutes"
+        },
+        {
+          "id": "l5",
+          "title": "React Hooks",
+          "description": "Explore useState and useEffect with examples.",
+          "duration": "40 minutes"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "title": "Java Programming",
+      "category": "Programming",
+      "duration": "10 hours",
+      "rating": 4.7,
+      "level": "beginner",
+      "whatYouWillLearn": [
+        "Understand Java syntax and data types",
+        "Use conditions and loops",
+        "Create classes and objects",
+        "Handle exceptions and work with collections"
+      ],
+      "lessons": [
+        {
+          "id": "l1",
+          "title": "Introduction to Java",
+          "description": "Understand Java and its main features.",
+          "duration": "15 minutes"
+        },
+        {
+          "id": "l2",
+          "title": "Variables and Data Types",
+          "description": "Learn variables, primitive types, and operators.",
+          "duration": "25 minutes"
+        },
+        {
+          "id": "l3",
+          "title": "Conditions and Loops",
+          "description": "Control program flow using if statements and loops.",
+          "duration": "35 minutes"
+        },
+        {
+          "id": "l4",
+          "title": "Classes and Objects",
+          "description": "Learn the foundations of object-oriented programming.",
+          "duration": "40 minutes"
+        }
+      ]
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
