@@ -1,387 +1,150 @@
+
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
+import AdminSidebar from "../components/AdminSidebar";
+import AdminNavbar from "../components/AdminNavbar";
+
+import { fetchCourses } from "../slices/coursesSlice";
+import { fetchUsers } from "../slices/usersSlice";
 
 function AdminDashboard() {
+  const dispatch = useDispatch();
+
+  const {
+    courses = [],
+    loading: coursesLoading,
+    error: coursesError,
+  } = useSelector((state) => state.courses || {});
+
+  const {
+    users = [],
+    loading: usersLoading,
+    error: usersError,
+  } = useSelector((state) => state.users || {});
+
+  useEffect(() => {
+    // Fetch dashboard data when the page loads
+    dispatch(fetchCourses());
+    dispatch(fetchUsers());
+
+    // Refresh data every 5 seconds
+    const interval = setInterval(() => {
+      dispatch(fetchCourses());
+      dispatch(fetchUsers());
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
+
+  const totalStudents = users.filter(
+    (user) => user.role !== "ADMIN"
+  ).length;
+
+  const totalEnrollments = users.reduce((total, user) => {
+    return total + (user.enrolledCourses?.length || 0);
+  }, 0);
+
+  const getEnrollmentCount = (courseId) => {
+    return users.reduce((total, user) => {
+      const enrolledCourses = user.enrolledCourses || [];
+
+      const isEnrolled = enrolledCourses.some(
+        (item) => String(item.courseId) === String(courseId)
+      );
+
+      return total + (isEnrolled ? 1 : 0);
+    }, 0);
+  };
+
+  const loading = coursesLoading || usersLoading;
+  const error = coursesError || usersError;
+
+  if (loading && courses.length === 0 && users.length === 0) {
+    return <p className="admin-loading">Loading dashboard...</p>;
+  }
 
   return (
+    <div className="admin-layout">
+      <AdminSidebar />
 
-    <div className="admin-page">
+      <main className="admin-main">
+        <AdminNavbar />
 
+        <div className="admin-content">
+          <h2>Dashboard Overview</h2>
+          <p>Welcome to your LearnHub administration panel.</p>
 
-      {/* =================================
-          ADMIN HEADER
-      ================================= */}
+          {error && <p className="admin-error">{error}</p>}
 
-      <div className="admin-header">
-
-        <div>
-
-          <h1>
-            Admin Dashboard
-          </h1>
-
-          <p>
-            Manage courses, students and learning content.
-          </p>
-
-        </div>
-
-      </div>
-
-
-
-      {/* =================================
-          STATISTICS
-      ================================= */}
-
-      <div className="admin-stats">
-
-
-        {/* Total Courses */}
-
-        <div className="admin-stat-card">
-
-          <div className="admin-stat-icon">
-            📚
-          </div>
-
-          <div>
-
-            <h2>
-              8
-            </h2>
-
-            <p>
-              Total Courses
-            </p>
-
-          </div>
-
-        </div>
-
-
-
-        {/* Total Students */}
-
-        <div className="admin-stat-card">
-
-          <div className="admin-stat-icon">
-            👨‍🎓
-          </div>
-
-          <div>
-
-            <h2>
-              150
-            </h2>
-
-            <p>
-              Total Students
-            </p>
-
-          </div>
-
-        </div>
-
-
-
-        {/* Enrollments */}
-
-        <div className="admin-stat-card">
-
-          <div className="admin-stat-icon">
-            📝
-          </div>
-
-          <div>
-
-            <h2>
-              325
-            </h2>
-
-            <p>
-              Total Enrollments
-            </p>
-
-          </div>
-
-        </div>
-
-
-
-        {/* Completed */}
-
-        <div className="admin-stat-card">
-
-          <div className="admin-stat-icon">
-            ✅
-          </div>
-
-          <div>
-
-            <h2>
-              85
-            </h2>
-
-            <p>
-              Completed Courses
-            </p>
-
-          </div>
-
-        </div>
-
-
-      </div>
-
-
-
-      {/* =================================
-          MANAGEMENT
-      ================================= */}
-
-      <div className="admin-section">
-
-        <h2>
-          Management
-        </h2>
-
-
-        <div className="admin-menu-grid">
-
-
-          {/* Manage Courses */}
-
-          <Link
-            to="/admin/courses"
-            className="admin-menu-card"
-          >
-
-            <div className="admin-menu-icon">
-              📚
+          <div className="admin-stats">
+            <div className="admin-stat-card">
+              <h3>Total Students</h3>
+              <h1>{totalStudents}</h1>
             </div>
 
-            <h3>
-              Manage Courses
-            </h3>
-
-            <p>
-              Add, edit and delete courses.
-            </p>
-
-          </Link>
-
-
-
-          {/* Manage Students */}
-
-          <Link
-            to="/admin/students"
-            className="admin-menu-card"
-          >
-
-            <div className="admin-menu-icon">
-              👨‍🎓
+            <div className="admin-stat-card">
+              <h3>Total Courses</h3>
+              <h1>{courses.length}</h1>
             </div>
 
-            <h3>
-              Manage Students
-            </h3>
-
-            <p>
-              View and manage registered students.
-            </p>
-
-          </Link>
-
-
-
-          {/* Categories */}
-
-          <Link
-            to="/admin/categories"
-            className="admin-menu-card"
-          >
-
-            <div className="admin-menu-icon">
-              🗂️
+            <div className="admin-stat-card">
+              <h3>Total Enrollments</h3>
+              <h1>{totalEnrollments}</h1>
             </div>
+          </div>
 
-            <h3>
-              Categories
-            </h3>
+          <div className="admin-section-header">
+            <h2>Course Enrollment Overview</h2>
 
-            <p>
-              Manage course categories.
-            </p>
+            <Link to="/admin/courses/add" className="admin-add-btn">
+              + Add Course
+            </Link>
+          </div>
 
-          </Link>
+          <div className="admin-table-container">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Course Name</th>
+                  <th>Category</th>
+                  <th>Level</th>
+                  <th>Enrolled Students</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
 
-
-
-          {/* Reports */}
-
-          <Link
-            to="/admin/reports"
-            className="admin-menu-card"
-          >
-
-            <div className="admin-menu-icon">
-              📊
-            </div>
-
-            <h3>
-              Reports
-            </h3>
-
-            <p>
-              View learning and enrollment statistics.
-            </p>
-
-          </Link>
-
-
+              <tbody>
+                {courses.length > 0 ? (
+                  courses.map((course) => (
+                    <tr key={course.id}>
+                      <td>{course.title}</td>
+                      <td>{course.category}</td>
+                      <td>{course.level}</td>
+                      <td>{getEnrollmentCount(course.id)}</td>
+                      <td>
+                        <Link
+                          to={`/admin/courses/view/${course.id}`}
+                          className="admin-view-btn"
+                        >
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5">No courses available.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-
-      </div>
-
-
-
-      {/* =================================
-          RECENT ACTIVITY
-      ================================= */}
-
-      <div className="admin-section">
-
-        <h2>
-          Recent Activity
-        </h2>
-
-
-        <div className="admin-table-container">
-
-          <table className="admin-table">
-
-
-            <thead>
-
-              <tr>
-
-                <th>
-                  Student
-                </th>
-
-                <th>
-                  Course
-                </th>
-
-                <th>
-                  Activity
-                </th>
-
-                <th>
-                  Status
-                </th>
-
-              </tr>
-
-            </thead>
-
-
-
-            <tbody>
-
-
-              <tr>
-
-                <td>
-                  Rahul
-                </td>
-
-                <td>
-                  React JS
-                </td>
-
-                <td>
-                  Enrolled
-                </td>
-
-                <td>
-
-                  <span className="status-active">
-                    Active
-                  </span>
-
-                </td>
-
-              </tr>
-
-
-
-              <tr>
-
-                <td>
-                  Priya
-                </td>
-
-                <td>
-                  Python
-                </td>
-
-                <td>
-                  Completed Lesson
-                </td>
-
-                <td>
-
-                  <span className="status-active">
-                    Active
-                  </span>
-
-                </td>
-
-              </tr>
-
-
-
-              <tr>
-
-                <td>
-                  Arun
-                </td>
-
-                <td>
-                  Java
-                </td>
-
-                <td>
-                  Enrolled
-                </td>
-
-                <td>
-
-                  <span className="status-active">
-                    Active
-                  </span>
-
-                </td>
-
-              </tr>
-
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      </div>
-
-
+      </main>
     </div>
-
   );
 }
-
 
 export default AdminDashboard;

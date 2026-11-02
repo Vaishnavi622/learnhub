@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser, logout } from "../slices/authSlice.js";
 
+const ADMIN_EMAIL = "vaishnaviboopathi12@gmail.com";
+
 function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -19,6 +21,7 @@ function Login() {
 
   const [validationError, setValidationError] = useState("");
 
+  // Handle input changes
   function handleChange(e) {
     const { name, value } = e.target;
 
@@ -30,15 +33,18 @@ function Login() {
     setValidationError("");
   }
 
+  // Handle login
   async function handleSubmit(e) {
     e.preventDefault();
     setValidationError("");
 
+    // Validate empty fields
     if (!form.email.trim() || !form.password) {
       setValidationError("Please enter email and password.");
       return;
     }
 
+    // Validate password length
     if (form.password.length < 8) {
       setValidationError(
         "Password must be at least 8 characters long."
@@ -47,20 +53,44 @@ function Login() {
     }
 
     try {
-      await dispatch(
+      // Dispatch login API request
+      const loggedInUser = await dispatch(
         loginUser({
           email: form.email.trim(),
           password: form.password,
         })
       ).unwrap();
 
-      navigate("/");
+      // Redirect based on user role
+      if (
+        loggedInUser.role === "ADMIN" ||
+        loggedInUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+      ) {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       console.error("Login failed:", err);
     }
   }
 
+  // Handle logout
+  function handleLogout() {
+    dispatch(logout());
+    setForm({
+      email: "",
+      password: "",
+    });
+    navigate("/login", { replace: true });
+  }
+
+  // Already logged-in user
   if (user) {
+    const isAdmin =
+      user.role === "ADMIN" ||
+      user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
     return (
       <div style={styles.container}>
         <div style={styles.card}>
@@ -69,25 +99,26 @@ function Login() {
           </h2>
 
           <p style={styles.subtitle}>
-            You are logged in to LearnHub.
+            {isAdmin
+              ? "You are logged in as Admin."
+              : "You are logged in to LearnHub."}
           </p>
 
           <button
             type="button"
             style={styles.button}
-            onClick={() => {
-              dispatch(logout());
-              navigate("/login");
-            }}
+            onClick={() => navigate(isAdmin ? "/admin" : "/")}
+          >
+            {isAdmin ? "Go to Admin Dashboard" : "Go to Home"}
+          </button>
+
+          <button
+            type="button"
+            style={styles.logoutButton}
+            onClick={handleLogout}
           >
             Logout
           </button>
-
-          <p style={styles.registerText}>
-            <Link to="/" style={styles.link}>
-              Go to Home
-            </Link>
-          </p>
         </div>
       </div>
     );
@@ -103,7 +134,7 @@ function Login() {
         </p>
 
         <form onSubmit={handleSubmit}>
-          {/* EMAIL */}
+          {/* Email */}
           <input
             name="email"
             type="email"
@@ -114,7 +145,7 @@ function Login() {
             required
           />
 
-          {/* PASSWORD */}
+          {/* Password */}
           <input
             name="password"
             type="password"
@@ -125,29 +156,29 @@ function Login() {
             required
           />
 
-          {/* PASSWORD WARNING */}
+          {/* Password warning */}
           {form.password.length > 0 &&
             form.password.length < 8 && (
               <p style={styles.warning}>
-                ⚠ Password must be at least 8 characters.
+                Password must be at least 8 characters.
               </p>
             )}
 
-          {/* VALIDATION ERROR */}
+          {/* Validation error */}
           {validationError && (
             <p style={styles.error}>
-              ⚠ {validationError}
+              {validationError}
             </p>
           )}
 
-          {/* REDUX / API ERROR */}
+          {/* API / Redux error */}
           {!validationError && error && (
             <p style={styles.error}>
-              ⚠ {error}
+              {error}
             </p>
           )}
 
-          {/* LOGIN BUTTON */}
+          {/* Login button */}
           <button
             type="submit"
             disabled={loading}
@@ -184,6 +215,7 @@ const styles = {
 
   card: {
     width: "400px",
+    maxWidth: "100%",
     background: "#ffffff",
     padding: "35px",
     borderRadius: "15px",
@@ -225,6 +257,7 @@ const styles = {
     padding: "10px",
     borderRadius: "7px",
     fontSize: "14px",
+    marginBottom: "12px",
   },
 
   button: {
@@ -237,6 +270,20 @@ const styles = {
     fontSize: "16px",
     fontWeight: "600",
     cursor: "pointer",
+    marginTop: "5px",
+  },
+
+  logoutButton: {
+    width: "100%",
+    padding: "13px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#dc2626",
+    color: "white",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    marginTop: "12px",
   },
 
   registerText: {

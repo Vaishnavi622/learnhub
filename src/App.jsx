@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import {
   BrowserRouter,
   Routes,
@@ -9,7 +10,7 @@ import {
   useLocation,
 } from "react-router-dom";
 
-// Pages
+// Student Pages
 import Home from "./pages/Home";
 import Profile from "./pages/profile";
 import Courses from "./pages/Courses";
@@ -18,9 +19,17 @@ import MyCourses from "./pages/MyCourses";
 import LearnCourse from "./pages/LearnCourse";
 import Login from "./pages/Login";
 import Register from "./components/Register";
-import AdminDashboard from "./pages/AdminDashboard";
 import Dashboard from "./pages/Dashboard";
 
+// Admin Pages
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminCourses from "./pages/AdminCourses";
+import AddCourse from "./pages/AddCourses";
+import EditCourse from "./pages/EditCourses";
+import ViewCourse from "./pages/ViewCourse";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
+
+// Navigation Bar
 function NavigationBar() {
   const location = useLocation();
   const [user, setUser] = useState(null);
@@ -28,6 +37,7 @@ function NavigationBar() {
   useEffect(() => {
     try {
       const stored = localStorage.getItem("user");
+
       if (stored) {
         setUser(JSON.parse(stored));
       } else {
@@ -38,12 +48,19 @@ function NavigationBar() {
     }
   }, [location]);
 
+  // Hide student navbar on admin pages
+  if (location.pathname.startsWith("/admin")) {
+    return null;
+  }
+
   const displayName = user
-    ? user.name || user.username || user.email?.split("@")[0] || "Profile"
+    ? user.name ||
+      user.username ||
+      user.email?.split("@")[0] ||
+      "Profile"
     : "";
 
   return (
-    
     <nav
       style={{
         width: "100%",
@@ -57,12 +74,6 @@ function NavigationBar() {
         borderBottom: "1px solid #e5e5e5",
       }}
     >
-      <ToastContainer> 
-        position="top-right"
-        autoClose={3000}
-        theme="colored"
-        </ToastContainer>
-      {/* Logo */}
       <Link
         to="/"
         style={{
@@ -75,7 +86,6 @@ function NavigationBar() {
         LearnHub
       </Link>
 
-      {/* Navigation Links */}
       <div
         style={{
           display: "flex",
@@ -83,51 +93,19 @@ function NavigationBar() {
           gap: "30px",
         }}
       >
-        <Link
-          to="/"
-          style={{
-            textDecoration: "none",
-            color: "#222",
-            fontSize: "16px",
-            fontWeight: "500",
-          }}
-        >
+        <Link to="/" className="nav-link">
           Home
         </Link>
 
-        <Link
-          to="/courses"
-          style={{
-            textDecoration: "none",
-            color: "#222",
-            fontSize: "16px",
-            fontWeight: "500",
-          }}
-        >
+        <Link to="/courses" className="nav-link">
           Courses
         </Link>
 
-        <Link
-          to="/my-courses"
-          style={{
-            textDecoration: "none",
-            color: "#222",
-            fontSize: "16px",
-            fontWeight: "500",
-          }}
-        >
+        <Link to="/my-courses" className="nav-link">
           My Courses
         </Link>
 
-        <Link
-          to="/profile"
-          style={{
-            textDecoration: "none",
-            color: "#222",
-            fontSize: "16px",
-            fontWeight: "500",
-          }}
-        >
+        <Link to="/profile" className="nav-link">
           Profile
         </Link>
 
@@ -140,23 +118,13 @@ function NavigationBar() {
               backgroundColor: "#5856e8",
               padding: "10px 20px",
               borderRadius: "8px",
-              fontSize: "16px",
-              fontWeight: "500",
             }}
           >
             {displayName}
           </Link>
         ) : (
           <>
-            <Link
-              to="/login"
-              style={{
-                textDecoration: "none",
-                color: "#222",
-                fontSize: "16px",
-                fontWeight: "500",
-              }}
-            >
+            <Link to="/login" className="nav-link">
               Login
             </Link>
 
@@ -168,8 +136,6 @@ function NavigationBar() {
                 backgroundColor: "#5856e8",
                 padding: "10px 20px",
                 borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "500",
               }}
             >
               Register
@@ -181,51 +147,57 @@ function NavigationBar() {
   );
 }
 
+// Main App
 function App() {
   return (
     <BrowserRouter>
-      {/* =========================
-          NAVIGATION BAR
-      ========================= */}
+      {/* Toast Notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        theme="colored"
+      />
+
+      {/* Navigation Bar */}
       <NavigationBar />
 
-      {/* =========================
-          PAGES / ROUTES
-      ========================= */}
+      {/* Application Routes */}
       <Routes>
-        {/* HOME */}
+        {/* Student Routes */}
         <Route path="/" element={<Home />} />
-
-        {/* PROFILE */}
         <Route path="/profile" element={<Profile />} />
-
-        {/* ALL COURSES */}
         <Route path="/courses" element={<Courses />} />
 
-        {/* COURSE DETAILS (Supports both /course/:id and /courses/:id) */}
         <Route path="/course/:id" element={<CourseDetails />} />
         <Route path="/courses/:id" element={<CourseDetails />} />
 
-        {/* MY COURSES */}
         <Route path="/my-courses" element={<MyCourses />} />
-
-        {/* DASHBOARD */}
         <Route path="/dashboard" element={<Dashboard />} />
-
-        {/* LEARNING PAGE */}
         <Route path="/learn/:id" element={<LearnCourse />} />
 
-        {/* LOGIN */}
         <Route path="/login" element={<Login />} />
-
-        {/* REGISTER */}
         <Route path="/register" element={<Register />} />
 
-        {/* ADMIN DASHBOARD */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/*" element={<AdminDashboard />} />
+        {/* ADMIN PROTECTED ROUTES */}
+<Route element={<AdminProtectedRoute />}>
+  <Route path="/admin" element={<AdminDashboard />} />
 
-        {/* FALLBACK */}
+  <Route path="/admin/courses" element={<AdminCourses />} />
+
+  <Route path="/admin/courses/add" element={<AddCourse />} />
+
+  <Route
+    path="/admin/courses/edit/:id"
+    element={<EditCourse />}
+  />
+
+  <Route
+    path="/admin/courses/view/:id"
+    element={<ViewCourse />}
+  />
+</Route>
+
+        {/* 404 Page */}
         <Route
           path="*"
           element={
@@ -240,6 +212,7 @@ function App() {
             >
               <h1>404</h1>
               <p>Page not found</p>
+              <Link to="/">Go Home</Link>
             </div>
           }
         />

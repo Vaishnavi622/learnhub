@@ -2,17 +2,22 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+
 import { fetchCourses } from "../slices/coursesSlice";
-import { getUser, updateUser } from "../userApi";
-import { toast, ToastContainer } from "react-toastify";
+import { getUser } from "../userApi";
+import { enrollCourse } from "../slices/usersSlice";
+
 function CourseDetails() {
   const { id } = useParams();
   const dispatch = useDispatch();
 
   // Get courses from Redux store
-  const { courses, loading, error } = useSelector(
-    (state) => state.courses
-  );
+  const {
+    courses = [],
+    loading,
+    error,
+  } = useSelector((state) => state.courses);
 
   // Get logged-in user from Redux store
   const user = useSelector((state) => state.auth.user);
@@ -20,6 +25,7 @@ function CourseDetails() {
   // Component states
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
+  const [checkingEnrollment, setCheckingEnrollment] = useState(true);
 
   // Find the selected course
   const course = courses.find(
@@ -35,11 +41,16 @@ function CourseDetails() {
 
   // Check whether the logged-in user is enrolled
   useEffect(() => {
+    let active = true;
+
     async function checkEnrollment() {
       if (!user?.id) {
         setEnrolled(false);
+        setCheckingEnrollment(false);
         return;
       }
+
+      setCheckingEnrollment(true);
 
       try {
         const latestUser = await getUser(user.id);
@@ -51,14 +62,27 @@ function CourseDetails() {
           (item) => String(item.courseId) === String(id)
         );
 
-        setEnrolled(alreadyEnrolled);
+        if (active) {
+          setEnrolled(alreadyEnrolled);
+        }
       } catch (error) {
         console.error("Error checking enrollment:", error);
-        setEnrolled(false);
+
+        if (active) {
+          setEnrolled(false);
+        }
+      } finally {
+        if (active) {
+          setCheckingEnrollment(false);
+        }
       }
     }
 
     checkEnrollment();
+
+    return () => {
+      active = false;
+    };
   }, [id, user?.id]);
 
   // Enroll the logged-in user in the selected course
@@ -69,54 +93,40 @@ function CourseDetails() {
     }
 
     if (!course) {
+      toast.error("Course not found.");
       return;
     }
 
     try {
       setEnrolling(true);
 
-      // Get the latest user information from JSON Server
-      const latestUser = await getUser(user.id);
-
-      const enrolledCourses =
-        latestUser.enrolledCourses || [];
-
-      // Check whether the user has already enrolled
-      const alreadyEnrolled = enrolledCourses.some(
-        (item) => String(item.courseId) === String(course.id)
-      );
-
-      if (alreadyEnrolled) {
-        setEnrolled(true);
-        return;
-      }
-
-      // Create the new enrollment
-      const newEnrollment = {
-        courseId: course.id,
-        progress: 0,
-        completedLessons: [],
-        enrolledAt: new Date().toISOString(),
-      };
-
-      // Update the user's enrollment list
-      const updatedUser = {
-        ...latestUser,
-        enrolledCourses: [
-          ...enrolledCourses,
-          newEnrollment,
-        ],
-      };
-
-      // Save the updated user to JSON Server
-      await updateUser(updatedUser);
+      // Save enrollment using Redux thunk
+      await dispatch(
+        enrollCourse({
+          userId: user.id,
+          courseId: course.id,
+        })
+      ).unwrap();
 
       setEnrolled(true);
 
       toast.success("Successfully enrolled in the course!");
     } catch (error) {
-      console.error("Enrollment error:", error);
-      toast.error("Unable to enroll. Please try again.");
+      if (
+        typeof error === "string" &&
+        error.toLowerCase().includes("already enrolled")
+      ) {
+        setEnrolled(true);
+        toast.info("You are already enrolled in this course.");
+      } else {
+        console.error("Enrollment error:", error);
+
+        toast.error(
+          typeof error === "string"
+            ? error
+            : "Unable to enroll. Please try again."
+        );
+      }
     } finally {
       setEnrolling(false);
     }
@@ -197,20 +207,32 @@ function CourseDetails() {
           <h2>Course Curriculum</h2>
 
           <div className="lessons">
-            {course.lessons?.map((lesson, index) => (
-              <div className="lesson" key={lesson.id}>
-                <span>
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+            {course.lessons?.length ? (
+              course.lessons.map((lesson, index) => (
+                <div className="lesson" key={lesson.id || index}>
+                  <span>
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
 
-                <div>
-                  <p>{lesson.title}</p>
-                  <small>{lesson.description}</small>
+                  <div>
+                    <p>{lesson.title}</p>
+                    <small>{lesson.description}</small>
+                  </div>
+
+                  <small>
+                    {lesson.duration || lesson.durationMinutes
+                      ? `${lesson.duration || lesson.durationMinutes}${
+                          typeof lesson.durationMinutes === "number"
+                            ? " min"
+                            : ""
+                        }`
+                      : ""}
+                  </small>
                 </div>
-
-                <small>{lesson.duration}</small>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p>Course lessons will be added soon.</p>
+            )}
           </div>
         </main>
 
@@ -239,12 +261,18 @@ function CourseDetails() {
 
           <button
             onClick={handleEnroll}
-            disabled={enrolled || enrolling}
+            disabled={
+              enrolled ||
+              enrolling ||
+              checkingEnrollment
+            }
             className={`enroll-btn ${
               enrolled ? "enrolled-btn" : ""
             }`}
           >
-            {enrolling
+            {checkingEnrollment
+              ? "Checking..."
+              : enrolling
               ? "Enrolling..."
               : enrolled
               ? "Already Enrolled"

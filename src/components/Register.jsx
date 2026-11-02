@@ -7,6 +7,9 @@ import {
   clearMessage,
 } from "../slices/authSlice.js";
 
+// Configure the admin email
+const ADMIN_EMAIL = "vaishnaviboopathi12@gmail.com";
+
 function Register() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -24,6 +27,7 @@ function Register() {
 
   const [validationError, setValidationError] = useState("");
 
+  // Handle input changes
   function handleChange(e) {
     const { name, value } = e.target;
 
@@ -36,6 +40,7 @@ function Register() {
     dispatch(clearMessage());
   }
 
+  // Handle registration
   async function handleRegister(e) {
     e.preventDefault();
 
@@ -63,12 +68,21 @@ function Register() {
       return;
     }
 
+    // Check whether this is the configured admin email
+    const isAdmin =
+      form.email.trim().toLowerCase() ===
+      ADMIN_EMAIL.toLowerCase();
+
+    // Assign role
+    const role = isAdmin ? "ADMIN" : "STUDENT";
+
     try {
       await dispatch(
         signupUser({
           name: form.name.trim(),
           email: form.email.trim(),
           password: form.password,
+          role: role,
         })
       ).unwrap();
 
@@ -79,9 +93,14 @@ function Register() {
         confirmPassword: "",
       });
 
+      alert(
+        isAdmin
+          ? "Admin account registered successfully! Please login."
+          : "Student account registered successfully! Please login."
+      );
+
       navigate("/login");
     } catch (err) {
-      // The error is displayed from Redux state.
       console.error("Registration failed:", err);
     }
   }
@@ -106,6 +125,7 @@ function Register() {
         )}
 
         <form onSubmit={handleRegister}>
+          {/* NAME */}
           <div className="form-group">
             <label htmlFor="name">Name</label>
 
@@ -120,6 +140,7 @@ function Register() {
             />
           </div>
 
+          {/* EMAIL */}
           <div className="form-group">
             <label htmlFor="email">Email</label>
 
@@ -134,6 +155,7 @@ function Register() {
             />
           </div>
 
+          {/* PASSWORD */}
           <div className="form-group">
             <label htmlFor="password">Password</label>
 
@@ -148,6 +170,7 @@ function Register() {
             />
           </div>
 
+          {/* CONFIRM PASSWORD */}
           <div className="form-group">
             <label htmlFor="confirmPassword">
               Confirm Password
@@ -164,6 +187,7 @@ function Register() {
             />
           </div>
 
+          {/* REGISTER BUTTON */}
           <button
             type="submit"
             className="auth-btn"

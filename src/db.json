@@ -12,7 +12,14 @@
       "email": "praveen12rangasamy@gmail.com",
       "password": "12345678",
       "id": "5V2W4gtFAa0",
-      "enrolledCourses": []
+      "enrolledCourses": [
+        {
+          "courseId": "2",
+          "progress": 0,
+          "completedLessons": [],
+          "enrolledAt": "2026-11-01T11:01:12.203Z"
+        }
+      ]
     },
     {
       "name": "praveen",
@@ -22,17 +29,57 @@
       "enrolledCourses": [
         {
           "courseId": "1",
-          "progress": 0,
-          "completedLessons": [],
+          "progress": 100,
+          "completedLessons": [
+            "l1",
+            "l2",
+            "l3",
+            "l4",
+            "l5"
+          ],
           "enrolledAt": "2026-10-30T01:30:38.263Z"
         },
         {
           "courseId": "2",
-          "progress": 0,
-          "completedLessons": [],
+          "progress": 75,
+          "completedLessons": [
+            "l3",
+            "l4",
+            "l2"
+          ],
           "enrolledAt": "2026-10-30T01:42:22.929Z"
         }
       ]
+    },
+    {
+      "name": "Vaishnavi",
+      "email": "vaishnavibooapthi127@gmail.com",
+      "password": "learnhub",
+      "id": "bjVtaFsWjak"
+    },
+    {
+      "name": "admin",
+      "email": "adminlearnhub@gmail.com",
+      "password": "adminhub",
+      "role": "STUDENT",
+      "enrolledCourses": [],
+      "id": "No_iajOrigo"
+    },
+    {
+      "name": "admin",
+      "email": "admin@learnhub.com",
+      "password": "admin123",
+      "role": "ADMIN",
+      "enrolledCourses": [],
+      "id": "RGEMOjnQ9yE"
+    },
+    {
+      "name": "vaishu",
+      "email": "vaishnaviboopathi12@gmail.com",
+      "password": "adminadmin",
+      "role": "ADMIN",
+      "enrolledCourses": [],
+      "id": "_K_6Qv3ygaM"
     }
   ],
   "courses": [
@@ -44,7 +91,7 @@
       "rating": 4.8,
       "level": "beginner",
       "whatYouWillLearn": [
-        "Understand React components and JSX",
+        "Understand React.js components and JSX",
         "Use props and state to build interactive interfaces",
         "Manage component state using React Hooks",
         "Build a small React application"
@@ -54,33 +101,40 @@
           "id": "l1",
           "title": "Introduction to React",
           "description": "Learn what React is and why developers use it.",
-          "duration": "10 minutes"
+          "duration": "10 minutes",
+          "durationMinutes": 0
         },
         {
           "id": "l2",
           "title": "Getting Started with React",
           "description": "Understand project setup and the React application structure.",
-          "duration": "20 minutes"
+          "duration": "20 minutes",
+          "durationMinutes": 0
         },
         {
           "id": "l3",
           "title": "JSX and Components",
           "description": "Learn how to create reusable UI components.",
-          "duration": "30 minutes"
+          "duration": "30 minutes",
+          "durationMinutes": 0
         },
         {
           "id": "l4",
           "title": "Props and State",
           "description": "Pass data between components and manage changing values.",
-          "duration": "35 minutes"
+          "duration": "35 minutes",
+          "durationMinutes": 0
         },
         {
           "id": "l5",
           "title": "React Hooks",
           "description": "Explore useState and useEffect with examples.",
-          "duration": "40 minutes"
+          "duration": "40 minutes",
+          "durationMinutes": 0
         }
-      ]
+      ],
+      "description": ", bsjtc,v ,",
+      "imageUrl": ""
     },
     {
       "id": "2",
